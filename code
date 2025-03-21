@@ -1,0 +1,100 @@
+# Install required libraries
+!pip install deepface opencv-python gtts pydub
+
+# Import libraries
+from deepface import DeepFace
+import cv2
+from gtts import gTTS
+from pydub import AudioSegment
+from pydub.playback import play
+import numpy as np
+from IPython.display import display, Javascript
+from google.colab.output import eval_js
+from base64 import b64decode
+from google.colab.patches import cv2_imshow  # Use cv2_imshow for Colab
+
+# JavaScript code to access webcam and capture image
+def capture_image():
+    js = Javascript('''
+        async function capture() {
+            const video = document.createElement('video');
+            const canvas = document.createElement('canvas');
+            document.body.appendChild(video);
+            document.body.appendChild(canvas);
+            video.style.display = 'none';
+            canvas.style.display = 'none';
+
+            // Set video source to webcam
+            const stream = await navigator.mediaDevices.getUserMedia({video: true});
+            video.srcObject = stream;
+            await video.play();
+
+            // Wait for video to be ready
+            await new Promise((resolve) => setTimeout(resolve, 500));
+
+            // Draw video frame to canvas
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            const data = canvas.toDataURL('image/jpeg', 0.8);
+
+            // Stop the webcam stream
+            stream.getTracks().forEach(track => track.stop());
+
+            // Remove video and canvas elements
+            document.body.removeChild(video);
+            document.body.removeChild(canvas);
+
+            return data;
+        }
+    ''')
+    display(js)
+    data = eval_js('capture()')
+    binary = b64decode(data.split(',')[1])
+    return binary
+
+# Function to speak out the detected emotion
+def speak_emotion(emotion):
+    tts = gTTS(text=f"The person seems {emotion}", lang='en')
+    tts.save("emotion.mp3")
+    sound = AudioSegment.from_mp3("emotion.mp3")
+    play(sound)
+
+# Main loop for real-time emotion detection
+try:
+    while True:
+        # Capture image from webcam
+        print("Capturing image...")
+        try:
+            image_data = capture_image()
+            image_array = np.frombuffer(image_data, dtype=np.uint8)
+            frame = cv2.imdecode(image_array, flags=1)
+
+            # Analyze the frame for emotions
+            try:
+                result = DeepFace.analyze(frame, actions=['emotion'], enforce_detection=False)
+                emotion = result[0]['dominant_emotion']
+                print(f"Detected Emotion: {emotion}")
+
+                # Speak out the detected emotion
+                speak_emotion(emotion)
+
+            except Exception as e:
+                print(f"Error in emotion detection: {e}")
+
+            # Display the frame using cv2_imshow
+            cv2_imshow(frame)  # Use cv2_imshow instead of cv2.imshow
+
+            # Wait for 1 second or until 'q' is pressed
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+
+        except Exception as e:
+            print(f"Error capturing image: {e}")
+            break
+
+except KeyboardInterrupt:
+    print("Stopping emotion detection...")
+
+finally:
+    cv2.destroyAllWindows()
