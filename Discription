@@ -1,0 +1,44 @@
+Main Loop:
+
+Continuously captures images from the webcam.
+
+Uses DeepFace.analyze() to detect the dominant emotion in the captured frame.
+
+Displays the frame with the detected emotion using cv2_imshow.
+
+Speaks out the detected emotion using speak_emotion().
+
+The loop can be stopped by pressing q or interrupting the kernel.
+
+Key Features
+Real-Time Emotion Detection:
+
+Detects emotions like happy, sad, angry, surprise, etc., in real-time.
+
+Text-to-Speech:
+
+Announces the detected emotion audibly.
+
+Webcam Access in Colab:
+
+Uses JavaScript to access the webcam and capture frames.
+
+Error Handling:
+
+Handles errors during image capture, emotion detection, and speech synthesis.
+
+How It Works
+The program captures a frame from the webcam.
+
+The frame is analyzed using the deepface library to detect emotions.
+
+The detected emotion is displayed on the frame and announced using text-to-speech.
+
+The process repeats in real-time until the user stops it.
+
+Applications
+Human-Computer Interaction: Enhancing user experience by detecting emotions.
+
+Education: Teaching students about AI and emotion recognition.
+
+Healthcare: Monitoring patient emotions in real-time.
